@@ -10,50 +10,120 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-
 # package
 
 ```{r}
 
 library(readxl)
-library(stringr)
+library(tibble)
+library(dplyr)
 
 ```
 
+
+# data import
+
 ```{r}
 
-ori_tib <- read_xlsx(
+ori_tbl <- readxl::read_xlsx(
     path = "chi_eg.xlsx", 
     col_names = T
 )
-ori_tib
+ori_tbl
 
 ```
 
+
+# testing
+
 ```{r}
 
-matrix(
-  rep(0, times = 4), 
-  nrow = 2, ncol = 2, 
-  dimnames = list(c(ori_tib[1, 1][[1]], "其他"), c("不合格", "合格"))
+# total
+ttal <- sum(ori_tbl[[2]])
+ttalUnq <- sum(ori_tbl[[3]])
+
+# for result record
+rsl <- vector(mode = "character", length = 5)
+names(rsl) <- c(
+  "目標", "目標不合格率", "其他不合格率", "統計量", "P Value"
 )
 
+rsl_lst <- list()
 
 ```
 
 ```{r}
 
+options(warn = -1)    # suppress warnings
+
+for (i in 1:nrow(ori_tbl)) {
+  
+  # contingency table
+  tgUnq <- ori_tbl[i, 3][[1]]
+  tgQ <- ori_tbl[i, 2][[1]] - ori_tbl[i, 3][[1]]
+  othUnq <- ttalUnq - tgUnq
+  othQ <- ttal - tgUnq - tgQ - othUnq
+  
+  test_mx <- matrix(
+    c(tgUnq, tgQ, othUnq, othQ), 
+    nrow = 2, ncol = 2, 
+    byrow = T,    # 依列方向填值
+    dimnames = list(c("目標", "其他"), c("不合格", "合格"))
+  )
+  
+  # testing
+  testRsl <- chisq.test(test_mx)
+  
+  # record result
+  rsl[[1]] <- ori_tbl[[1]][[i]]
+  
+  rsl[[2]] <- {tgUnq / (tgUnq + tgQ) * 100} %>% 
+    round(., 2) %>% 
+    as.character(.) %>% 
+    paste0(.,"% ",  "(", tgUnq, "/", (tgUnq + tgQ), ")")
+  
+  rsl[[3]] <- {othUnq / (othUnq + othQ) * 100} %>% 
+    round(., 2) %>% 
+    as.character(.) %>% 
+    paste0(.,"% ",  "(", othUnq, "/", (othUnq + othQ), ")")
+  
+  rsl[[4]] <- testRsl$statistic %>% round(4) %>% as.character()
+  rsl[[5]] <- testRsl$p.value %>% round(4) %>% as.character()
+  
+  rsl_lst[[i]] <- rsl
+}
+
+```
 
 
+# result
 
+```{r}
+
+rsl_tbl<- rsl_lst %>% 
+  dplyr::bind_rows()    # named vector
+
+rsl_tbl
+
+```
+
+
+# export
+
+```{r}
+
+# write.csv(
+#   rsl_tbl, 
+#   file = paste0(names(ori_tbl)[[1]], "檢定結果.csv"), 
+#   row.names = F
+# )
 
 ```
 
 
 ```{r}
 
-chisq.test()
-table()
+# fisher.test(test_mx)
 
 ```
 
