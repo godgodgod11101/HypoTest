@@ -1,0 +1,59 @@
+---
+title: "Chi-Squared Test of Independence"
+author: "Jacky Wang"
+date: '2022-07-09'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# package
+
+```{r}
+
+library(readxl)
+library(stringr)
+
+```
+
+```{r}
+
+ori_tib <- read_xlsx(
+    path = "chi_eg.xlsx", 
+    col_names = T
+)
+ori_tib
+
+```
+
+```{r}
+
+matrix(
+  rep(0, times = 4), 
+  nrow = 2, ncol = 2, 
+  dimnames = list(c(ori_tib[1, 1][[1]], "其他"), c("不合格", "合格"))
+)
+
+
+```
+
+```{r}
+
+
+
+
+
+```
+
+
+```{r}
+
+chisq.test()
+table()
+
+```
+
